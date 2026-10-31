@@ -1,0 +1,6 @@
+name = "camhub-notifier-worker"
+main = "index.ts"
+compatibility_date = "2026-10-01"
+
+[triggers]
+crons = ["* * * * *"] # Berjalan otomatis tiap 1 menit
