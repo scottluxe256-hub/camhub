@@ -1,0 +1,25 @@
+name: Deploy Cloudflare Worker
+
+on:
+  push:
+    branches:
+      - main # Ganti ke master jika branch default kamu master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy Worker
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Deploy Worker
+        run: npx --yes wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
