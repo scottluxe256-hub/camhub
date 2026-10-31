@@ -1,7 +1,7 @@
 name = "camhub-reminder"
 main = "index.ts"
 compatibility_date = "2026-10-01"
-account_id = "30ebd141242eb0bc8c59cae48011df97" # Masukkan ID hasil curl di sini
+account_id = "30ebd141242eb0bc8c59cae48011df97"
 
 [triggers]
 crons = ["* * * * *"]
