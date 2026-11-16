@@ -43,3 +43,35 @@ export const uploadToCloudinary = async (file: File) => {
     throw error;
   }
 };
+
+/**
+ * Helper thumbnail avatar ringan (96x96, auto face-crop, AVIF/WebP otomatis)
+ * tanpa menumpuk transformasi 400x400 bawaan saat upload.
+ */
+export const getCloudinaryAvatarUrl = (
+  url?: string | null,
+  publicId?: string | null
+): string | null => {
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+
+  if (publicId && cloudName) {
+    return `https://res.cloudinary.com/${cloudName}/image/upload/c_scale,w_96,h_96,q_auto,f_avif/${publicId}`;
+  }
+
+  if (!url) return null;
+  if (!url.includes('res.cloudinary.com') || !url.includes('/image/upload/')) {
+    return url;
+  }
+
+  if (url.includes('/image/upload/c_fill,w_400,h_400,q_auto,f_auto/')) {
+    return url.replace(
+      '/image/upload/c_fill,w_400,h_400,q_auto,f_auto/',
+      '/image/upload/c_scale,w_96,h_96,q_auto,f_avif/'
+    );
+  }
+
+  return url.replace(
+    '/image/upload/',
+    '/image/upload/c_scale,w_96,h_96,q_auto,f_avif/'
+  );
+};

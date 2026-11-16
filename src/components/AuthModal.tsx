@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import LoginForm from './LoginForm';
 import RegisterForm from './RegisterForm';
-import ForgotForm from './ForgotForm';
+import OtpForm from './OtpForm';
 import ResetForm from './ResetForm';
 
-export type AuthView = 'login' | 'register' | 'forgot' | 'reset';
+export type AuthView = 'login' | 'register' | 'otp' | 'reset';
 
 interface AuthModalProps {
     isOpen: boolean;
@@ -15,10 +16,21 @@ interface AuthModalProps {
 
 export default function AuthModal({ isOpen, onClose, defaultView = 'login' }: AuthModalProps) {
     const [view, setView] = useState<AuthView>(defaultView);
+    const [recoveryEmail, setRecoveryEmail] = useState('');
+    const [recoveryClient, setRecoveryClient] = useState<SupabaseClient | null>(null);
 
     // Sinkronisasi view saat modal dibuka kembali
     useEffect(() => {
-        if (isOpen) setView(defaultView);
+        if (isOpen) {
+            setView(defaultView);
+            if (defaultView !== 'otp' && defaultView !== 'reset') {
+                setRecoveryEmail('');
+                setRecoveryClient(null);
+            }
+        } else {
+            setRecoveryEmail('');
+            setRecoveryClient(null);
+        }
     }, [isOpen, defaultView]);
 
     // Kunci scroll halaman belakang (landing page) saat modal aktif
@@ -45,13 +57,13 @@ export default function AuthModal({ isOpen, onClose, defaultView = 'login' }: Au
             title: 'Bergabung dengan CamHub.',
             desc: 'Daftarkan data dirimu sebagai siswa untuk mulai menggunakan fasilitas lab.'
         },
-        forgot: {
-            title: 'Lupa Kata Sandi?',
-            desc: 'Tenang, masukkan email sekolahmu dan kami akan mengirimkan tautan pemulihan.'
+        otp: {
+            title: 'Verifikasi Kode OTP.',
+            desc: 'Masukkan 6 digit kode rahasia yang baru saja kami kirim ke kotak masuk emailmu.'
         },
         reset: {
             title: 'Buat Sandi Baru.',
-            desc: 'Pastikan kata sandi barumu kuat dan mudah diingat.'
+            desc: 'Verifikasi berhasil! Sekarang buat kata sandi baru yang kuat dan mudah diingat.'
         }
     };
 
@@ -121,10 +133,41 @@ export default function AuthModal({ isOpen, onClose, defaultView = 'login' }: Au
                                 transition={{ duration: 0.3 }}
                                 className="flex flex-col w-full"
                             >
-                                {view === 'login' && <LoginForm onSwitchView={setView} />}
-                                {view === 'register' && <RegisterForm onSwitchView={setView} />}
-                                {view === 'forgot' && <ForgotForm onSwitchView={setView} />}
-                                {view === 'reset' && <ResetForm onSwitchView={setView} />}
+                                {view === 'login' && (
+                                    <LoginForm
+                                        onSwitchView={setView}
+                                        onClose={onClose}
+                                        onGoToOtp={(email) => {
+                                            setRecoveryEmail(email);
+                                            setRecoveryClient(null);
+                                            setView('otp');
+                                        }}
+                                    />
+                                )}
+                                {view === 'register' && (
+                                    <RegisterForm
+                                        onSwitchView={setView}
+                                        onClose={onClose}
+                                    />
+                                )}
+                                {view === 'otp' && (
+                                    <OtpForm
+                                        email={recoveryEmail}
+                                        onSwitchView={setView}
+                                        onVerified={(client) => {
+                                            setRecoveryClient(client);
+                                            setView('reset');
+                                        }}
+                                    />
+                                )}
+                                {view === 'reset' && (
+                                    <ResetForm
+                                        email={recoveryEmail}
+                                        recoveryClient={recoveryClient}
+                                        onSwitchView={setView}
+                                        onSuccess={onClose}
+                                    />
+                                )}
                             </motion.div>
                         </AnimatePresence>
                     </div>

@@ -17,15 +17,15 @@ export const CustomSwal = ReactSwal.mixin({
   backdrop: 'rgba(0,0,0,0.6)',
 });
 
-// Toast Notif Pojok
+// Toast Notif Atas Tengah (Top Center)
 export const Toast = ReactSwal.mixin({
   toast: true,
-  position: 'top-end',
+  position: 'top',
   showConfirmButton: false,
   timer: 3000,
   timerProgressBar: true,
   customClass: {
-    popup: 'rounded-xl bg-white shadow-xl border border-stone-100 font-["Outfit",sans-serif] mt-16 mr-4',
+    popup: 'rounded-2xl bg-white shadow-xl border border-stone-100 font-["Outfit",sans-serif] mt-16',
     title: 'text-sm font-bold text-[#1c1917]',
   },
 });

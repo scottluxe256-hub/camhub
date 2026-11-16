@@ -7,7 +7,11 @@ import SessionTwo from '../components/SessionTwo';
 import Footer from '../components/Footer';
 import AuthModal from '../components/AuthModal';
 
-export default function LandingPage() {
+interface LandingPageProps {
+  isSplashFinished?: boolean;
+}
+
+export default function LandingPage({ isSplashFinished = true }: LandingPageProps) {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
 
   // Fungsi pencegat yang akan diteruskan ke komponen anak
@@ -20,7 +24,10 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-[#fafaf9] text-stone-800 selection:bg-orange-500 selection:text-white">
-      <Navbar onRequireAuth={requireAuth} />
+      <Navbar
+        isSplashFinished={isSplashFinished}
+        onRequireAuth={requireAuth}
+      />
       <main>
         <Header />
         <SessionOne />

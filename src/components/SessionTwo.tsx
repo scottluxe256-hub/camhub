@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Star, CalendarClock, UserCheck, CheckCircle2, Loader2 } from 'lucide-react';
 import PenjelasanModal, { type PenjelasanData } from './PenjelasanModal';
 import { supabase } from '../lib/supabase';
-import { showFeedbackAlert } from '../lib/CustomSwal'; // <-- Import CustomSwal kita
+import { showFeedbackAlert } from '../lib/CustomSwal';
 
 interface SessionTwoProps {
   onRequireAuth?: () => void;
@@ -13,7 +13,7 @@ export default function SessionTwo({ onRequireAuth }: SessionTwoProps) {
   const [feedbackCategory, setFeedbackCategory] = useState<'request' | 'fasilitas' | 'layanan'>('request');
   const [feedbackText, setFeedbackText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // State untuk Modal Penjelasan
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedData, setSelectedData] = useState<PenjelasanData | null>(null);
@@ -21,7 +21,7 @@ export default function SessionTwo({ onRequireAuth }: SessionTwoProps) {
   // DATA UNTUK MODAL ATURAN DENDA (Tanpa Gambar)
   const aturanDendaData: PenjelasanData = {
     title: 'Aturan Denda & Sanksi',
-    fullDesc: 'Setiap pelanggaran waktu pengembalian dan kerusakan alat akan dikenakan sanksi sesuai SOP Laboratorium Multimedia:\n\n1. Keterlambatan Harian: Telat mengembalikan alat dari batas slot waktu akan dicatat. Jika terulang hingga 3 kali, akun akan dibekukan (suspend) selama 1 minggu.\n2. Kerusakan Ringan/Berat: Peminjam wajib melapor. Biaya perbaikan akan dibebankan kepada peminjam setelah dievaluasi oleh teknisi sekolah.\n3. Kehilangan Komponen: Menghilangkan alat atau aksesoris (seperti baterai, tutup lensa, memori) wajib diganti dengan barang berspesifikasi sama persis.\n\nHarap disiplin dan jaga barang bersama demi kelancaran tugas semua siswa!'
+    fullDesc: 'Setiap pelanggaran waktu pengembalian dan kerusakan alat akan dikenakan sanksi sesuai SOP Laboratorium Multimedia:\n\n1. Keterlambatan Harian: Telat mengembalikan alat dari batas slot waktu akan dicatat. Jika terulang hingga 3 kali, akun akan dibekukan (suspend) selama 1 minggu.\n2. Kerusakan Ringan/Berat: Peminjam wajib melapor. Biaya perbaikan akan dibebankan kepada peminjam setelah dievaluasi oleh teknisi sekolah.\n3. Kehilangan Komponen: Menghilangkan alat atau aksesoris (seperti baterai, tutup lensa, memori) wajib diganti dengan barang berspesifikasi sama persis.\n\nHarap disiplin dan jaga barang bersama demi kelancaran tugas semua siswa!',
   };
 
   const tips = [
@@ -76,9 +76,11 @@ export default function SessionTwo({ onRequireAuth }: SessionTwoProps) {
 
   const handleFeedbackSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const { data: { session } } = await supabase.auth.getSession();
-    
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
     if (!session?.user) {
       if (onRequireAuth) onRequireAuth();
       return;
@@ -89,12 +91,10 @@ export default function SessionTwo({ onRequireAuth }: SessionTwoProps) {
     try {
       const finalMessage = `[Kategori: ${feedbackCategory.toUpperCase()}] - ${feedbackText}`;
 
-      const { error } = await supabase
-        .from('feedbacks')
-        .insert({
-          user_id: session.user.id,
-          pesan: finalMessage,
-        });
+      const { error } = await supabase.from('feedbacks').insert({
+        user_id: session.user.id,
+        pesan: finalMessage,
+      });
 
       if (error) throw error;
 
@@ -104,7 +104,6 @@ export default function SessionTwo({ onRequireAuth }: SessionTwoProps) {
       );
 
       setFeedbackText('');
-      
     } catch (error: any) {
       console.error('Error kirim feedback:', error);
       CustomSwal.fire({
@@ -119,22 +118,21 @@ export default function SessionTwo({ onRequireAuth }: SessionTwoProps) {
   };
 
   return (
-    <section className="w-full bg-[#fafaf9] overflow-hidden">
-      
+    <section className="w-full overflow-x-clip bg-[#fafaf9]">
       {/* Modal Detail Pop-up */}
-      <PenjelasanModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        data={selectedData} 
+      <PenjelasanModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        data={selectedData}
       />
 
       {/* BANNER PANDUAN UTAMA */}
-      <div id="sop" className="relative w-full min-h-[440px] bg-[#1c1917] overflow-hidden flex items-center">
+      <div id="sop" className="relative flex min-h-[440px] w-full items-center overflow-hidden bg-[#1c1917]">
         <motion.img
           initial={{ scale: 1.1, opacity: 0 }}
           whileInView={{ scale: 1, opacity: 0.65 }}
-          viewport={{ once: false, margin: "-50px" }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
+          viewport={{ once: false, amount: 0.15 }}
+          transition={{ duration: 1.2, ease: 'easeOut' }}
           src="/sessions2.avif"
           alt="Banner Panduan Lab"
           className="absolute inset-0 h-full w-full object-cover object-right sm:object-center"
@@ -145,11 +143,13 @@ export default function SessionTwo({ onRequireAuth }: SessionTwoProps) {
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: false, margin: "-50px" }}
+            viewport={{ once: false, amount: 0.15 }}
+            transition={{ duration: 0.6 }}
             className="max-w-xl text-left"
           >
-            <h2 className="font-['Outfit',sans-serif] text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl leading-tight">
-              Pinjam Nyaman, <br className="hidden sm:inline" />Karya Maksimal.
+            <h2 className="font-['Outfit',sans-serif] text-3xl font-black leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl">
+              Pinjam Nyaman, <br className="hidden sm:inline" />
+              Karya Maksimal.
             </h2>
 
             <p className="mt-4 text-sm font-medium leading-relaxed text-stone-300">
@@ -160,7 +160,7 @@ export default function SessionTwo({ onRequireAuth }: SessionTwoProps) {
             <div className="mt-7">
               <button
                 onClick={() => openModal(aturanDendaData)}
-                className="inline-block rounded-full bg-orange-600 px-7 py-3 text-xs sm:text-sm font-extrabold text-white shadow-lg shadow-orange-600/30 transition hover:bg-orange-500 active:scale-95"
+                className="inline-block rounded-full bg-orange-600 px-7 py-3 text-xs font-extrabold text-white shadow-lg shadow-orange-600/30 transition hover:bg-orange-500 active:scale-95 sm:text-sm"
               >
                 Aturan Denda
               </button>
@@ -170,7 +170,7 @@ export default function SessionTwo({ onRequireAuth }: SessionTwoProps) {
       </div>
 
       {/* KARTU ALUR CEPAT */}
-      <div id="alur-pinjam" className="mx-auto -mt-8 max-w-7xl px-5 sm:px-8 relative z-20">
+      <div id="alur-pinjam" className="relative z-20 mx-auto -mt-8 max-w-7xl px-5 sm:px-8">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {steps.map((step, idx) => {
             const Icon = step.icon;
@@ -179,16 +179,20 @@ export default function SessionTwo({ onRequireAuth }: SessionTwoProps) {
                 key={idx}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: false, margin: "-50px" }}
-                transition={{ delay: idx * 0.1 }}
+                viewport={{ once: false, amount: 0.15 }}
+                transition={{ duration: 0.45, delay: idx * 0.1 }}
                 className="flex items-start gap-4 rounded-2xl border border-stone-200/80 bg-white p-5 shadow-lg shadow-stone-200/50"
               >
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-600">
                   <Icon className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="font-['Outfit',sans-serif] font-extrabold text-[#1c1917] text-sm sm:text-base">{step.title}</h3>
-                  <p className="mt-1 text-xs font-medium leading-relaxed text-stone-500">{step.desc}</p>
+                  <h3 className="font-['Outfit',sans-serif] text-sm font-extrabold text-[#1c1917] sm:text-base">
+                    {step.title}
+                  </h3>
+                  <p className="mt-1 text-xs font-medium leading-relaxed text-stone-500">
+                    {step.desc}
+                  </p>
                 </div>
               </motion.div>
             );
@@ -201,33 +205,48 @@ export default function SessionTwo({ onRequireAuth }: SessionTwoProps) {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, margin: "-50px" }}
-          className="text-center mb-16"
+          viewport={{ once: false, amount: 0.15 }}
+          transition={{ duration: 0.5 }}
+          className="mb-20 text-center sm:mb-16"
         >
-          <span className="text-xs font-extrabold uppercase tracking-wider text-orange-600">Pengalaman Siswa</span>
+          <span className="text-xs font-extrabold tracking-wider text-orange-600 uppercase">
+            Pengalaman Siswa
+          </span>
           <h2 className="mt-2 font-['Outfit',sans-serif] text-3xl font-black text-[#1c1917] sm:text-4xl">
-            Kata Teman-Teman Multimedia
+            Kata Teman-Teman
           </h2>
         </motion.div>
 
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-8">
+        <div className="grid grid-cols-1 gap-24 lg:grid-cols-2 lg:gap-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, margin: "-50px" }}
-            className="relative flex flex-col sm:flex-row items-center rounded-3xl bg-white shadow-xl shadow-stone-200/50 pt-24 sm:pt-0"
+            viewport={{ once: false, amount: 0.15 }}
+            transition={{ duration: 0.5 }}
+            className="relative flex flex-col items-center rounded-3xl bg-white pt-36 shadow-xl shadow-stone-200/50 sm:flex-row sm:items-end sm:pt-0"
           >
-            <div className="absolute -top-16 sm:static sm:top-0 h-48 w-40 sm:h-64 sm:w-56 shrink-0 overflow-hidden rounded-t-3xl sm:rounded-tr-none sm:rounded-l-3xl">
-              <img src="/ishaq2.webp" alt="Ishaq" className="h-full w-full object-cover object-top drop-shadow-md bg-stone-100" onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/1001193092.png'; }} />
+            <div className="absolute -top-16 flex h-48 w-40 shrink-0 items-end justify-center overflow-hidden sm:static sm:top-0 sm:h-72 sm:w-56 sm:rounded-bl-3xl">
+              <img
+                src="/ishaq2.webp"
+                alt="Ishaq"
+                className="h-full w-full object-contain object-bottom drop-shadow-md"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = '/1001193092.png';
+                }}
+              />
             </div>
-            <div className="p-6 sm:p-8 text-center sm:text-left flex-1">
-              <p className="text-sm italic font-medium leading-relaxed text-stone-600">
+            <div className="flex-1 p-6 text-center sm:self-center sm:p-8 sm:text-left">
+              <p className="text-sm font-medium italic leading-relaxed text-stone-600">
                 "Pinjam Sony A7 III seharian buat dokumentasi Pensi sekolah, baterai dikasih full dan sensor kameranya bener-bener bersih!"
               </p>
-              <div className="mt-4 flex justify-center sm:justify-start gap-1 text-orange-500">
-                {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 fill-orange-500" />)}
+              <div className="mt-4 flex justify-center gap-1 text-orange-500 sm:justify-start">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="h-4 w-4 fill-orange-500" />
+                ))}
               </div>
-              <h4 className="mt-3 font-['Outfit',sans-serif] text-lg font-extrabold text-[#1c1917]">Ishaq Nirwasita</h4>
+              <h4 className="mt-3 font-['Outfit',sans-serif] text-lg font-extrabold text-[#1c1917]">
+                Ishaq Nirwasita
+              </h4>
               <span className="text-xs font-semibold text-stone-400">XII RPL 2</span>
             </div>
           </motion.div>
@@ -235,63 +254,90 @@ export default function SessionTwo({ onRequireAuth }: SessionTwoProps) {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, margin: "-50px" }}
-            transition={{ delay: 0.1 }}
-            className="relative flex flex-col sm:flex-row items-center rounded-3xl bg-white shadow-xl shadow-stone-200/50 pt-24 sm:pt-0 mt-12 sm:mt-0"
+            viewport={{ once: false, amount: 0.15 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="relative flex flex-col items-center rounded-3xl bg-white pt-36 shadow-xl shadow-stone-200/50 sm:flex-row sm:items-end sm:pt-0"
           >
-            <div className="absolute -top-16 sm:static sm:top-0 h-48 w-40 sm:h-64 sm:w-56 shrink-0 overflow-hidden rounded-t-3xl sm:rounded-tr-none sm:rounded-l-3xl">
-              <img src="/areka.webp" alt="Areka" className="h-full w-full object-cover object-top drop-shadow-md bg-stone-100" onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/1001193092.png'; }} />
+            <div className="absolute -top-16 flex h-48 w-40 shrink-0 items-end justify-center overflow-hidden sm:static sm:top-0 sm:h-72 sm:w-56 sm:rounded-bl-3xl">
+              <img
+                src="/areka.webp"
+                alt="Areka"
+                className="h-full w-full object-contain object-bottom drop-shadow-md"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = '/1001193092.png';
+                }}
+              />
             </div>
-            <div className="p-6 sm:p-8 text-center sm:text-left flex-1">
-              <p className="text-sm italic font-medium leading-relaxed text-stone-600">
+            <div className="flex-1 p-6 text-center sm:self-center sm:p-8 sm:text-left">
+              <p className="text-sm font-medium italic leading-relaxed text-stone-600">
                 "SOP-nya jelas banget. Kalau bingung ganti lensa di lapangan, tinggal baca tips di portal ini. Alat lab kerawat dengan baik."
               </p>
-              <div className="mt-4 flex justify-center sm:justify-start gap-1 text-orange-500">
-                {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 fill-orange-500" />)}
+              <div className="mt-4 flex justify-center gap-1 text-orange-500 sm:justify-start">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="h-4 w-4 fill-orange-500" />
+                ))}
               </div>
-              <h4 className="mt-3 font-['Outfit',sans-serif] text-lg font-extrabold text-[#1c1917]">Areka Putra</h4>
+              <h4 className="mt-3 font-['Outfit',sans-serif] text-lg font-extrabold text-[#1c1917]">
+                Areka Putra
+              </h4>
               <span className="text-xs font-semibold text-stone-400">XII RPL 1</span>
             </div>
           </motion.div>
         </div>
       </div>
 
-      {/* EDUKASI & TIPS PRODUKSI */}
-      <div id="tips" className="mx-auto max-w-7xl px-5 py-16 sm:px-8">
+      {/* EDUKASI & TIPS PRODUKSI (2 ATAS - 2 BAWAH DI PORTRAIT) */}
+      <div id="tips" className="mx-auto max-w-7xl px-4 py-16 sm:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, margin: "-50px" }}
+          viewport={{ once: false, amount: 0.15 }}
+          transition={{ duration: 0.5 }}
           className="text-center"
         >
-          <span className="text-xs font-extrabold uppercase tracking-wider text-orange-600">Best Practices</span>
-          <h2 className="mt-1 font-['Outfit',sans-serif] text-3xl font-black text-[#1c1917]">Pojok Edukasi & Tips Produksi</h2>
-          <p className="mt-3 text-sm font-medium text-stone-500">Panduan singkat penggunaan dan perawatan unit agar hasil karya selalu maksimal.</p>
+          <span className="text-xs font-extrabold tracking-wider text-orange-600 uppercase">
+            Best Practices
+          </span>
+          <h2 className="mt-1 font-['Outfit',sans-serif] text-3xl font-black text-[#1c1917]">
+            Pojok Edukasi & Tips Produksi
+          </h2>
+          <p className="mt-3 text-sm font-medium text-stone-500">
+            Panduan singkat penggunaan dan perawatan unit agar hasil karya selalu maksimal.
+          </p>
         </motion.div>
 
-        <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-10 grid grid-cols-2 gap-3.5 sm:mt-12 sm:gap-8 lg:grid-cols-4">
           {tips.map((item, idx) => (
             <motion.div
               key={idx}
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 25 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false, margin: "-50px" }}
-              transition={{ delay: idx * 0.1 }}
-              className="group flex flex-col overflow-hidden rounded-3xl bg-white shadow-lg shadow-stone-200/50 transition hover:-translate-y-2 hover:shadow-xl"
+              viewport={{ once: false, amount: 0.15 }}
+              transition={{ duration: 0.45, delay: idx * 0.08 }}
+              className="group flex flex-col overflow-hidden rounded-2xl bg-white shadow-lg shadow-stone-200/50 transition hover:-translate-y-2 hover:shadow-xl sm:rounded-3xl"
             >
-              <div className="h-48 w-full overflow-hidden">
-                <img src={item.image} alt={item.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-110" />
+              <div className="h-28 w-full overflow-hidden sm:h-48">
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
+                />
               </div>
-              <div className="flex flex-1 flex-col justify-between p-6">
+              <div className="flex flex-1 flex-col justify-between p-3.5 sm:p-6">
                 <div>
-                  <span className="text-[10px] font-extrabold tracking-wider text-orange-500 uppercase">Panduan Lab</span>
-                  <h3 className="mt-2 font-['Outfit',sans-serif] text-lg font-extrabold text-[#1c1917] leading-snug">{item.title}</h3>
-                  <p className="mt-3 text-xs font-medium leading-relaxed text-stone-500">{item.desc}</p>
+                  <span className="text-[9px] font-extrabold tracking-wider text-orange-500 uppercase sm:text-[10px]">
+                    Panduan Lab
+                  </span>
+                  <h3 className="mt-1 font-['Outfit',sans-serif] text-xs font-extrabold leading-snug text-[#1c1917] sm:mt-2 sm:text-lg">
+                    {item.title}
+                  </h3>
+                  <p className="mt-1.5 line-clamp-3 text-[10.5px] font-medium leading-relaxed text-stone-500 sm:mt-3 sm:line-clamp-none sm:text-xs">
+                    {item.desc}
+                  </p>
                 </div>
-                {/* TOMBOL PICU MODAL */}
-                <button 
+                <button
                   onClick={() => openModal(item)}
-                  className="mt-6 w-fit rounded-full border border-stone-200 px-6 py-2.5 text-xs font-bold text-[#1c1917] transition group-hover:border-orange-600 group-hover:bg-orange-600 group-hover:text-white"
+                  className="mt-3.5 w-full rounded-full border border-stone-200 px-3 py-2 text-center text-[10px] font-bold text-[#1c1917] transition group-hover:border-orange-600 group-hover:bg-orange-600 group-hover:text-white sm:mt-6 sm:w-fit sm:px-6 sm:py-2.5 sm:text-xs"
                 >
                   Baca Selengkapnya
                 </button>
@@ -302,12 +348,12 @@ export default function SessionTwo({ onRequireAuth }: SessionTwoProps) {
       </div>
 
       {/* KOTAK SARAN & REQUEST ALAT */}
-      <div id="feedback" className="relative mt-10 w-full py-24 px-5 bg-[#1c1917] overflow-hidden">
+      <div id="feedback" className="relative mt-10 w-full overflow-hidden bg-[#1c1917] px-5 py-24">
         <motion.img
           initial={{ scale: 1.1, opacity: 0 }}
           whileInView={{ scale: 1, opacity: 0.35 }}
-          viewport={{ once: false, margin: "-50px" }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
+          viewport={{ once: false, amount: 0.15 }}
+          transition={{ duration: 1.2, ease: 'easeOut' }}
           src="/sessions3.avif"
           alt="Latar Kotak Saran"
           className="absolute inset-0 h-full w-full object-cover"
@@ -317,12 +363,13 @@ export default function SessionTwo({ onRequireAuth }: SessionTwoProps) {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, margin: "-50px" }}
+            viewport={{ once: false, amount: 0.15 }}
+            transition={{ duration: 0.5 }}
           >
-            <h2 className="font-['Outfit',sans-serif] text-3xl font-black text-white sm:text-4xl lg:text-5xl leading-tight">
+            <h2 className="font-['Outfit',sans-serif] text-3xl font-black leading-tight text-white sm:text-4xl lg:text-5xl">
               Ada Gear Impian yang Belum Masuk Lab?
             </h2>
-            <p className="mt-4 text-sm font-medium text-stone-300 max-w-xl mx-auto leading-relaxed">
+            <p className="mx-auto mt-4 max-w-xl text-sm font-medium leading-relaxed text-stone-300">
               Butuh lensa potret khusus buat tugas akhir, aksesoris audio, atau punya evaluasi sistem lab? Beri tahu tim operator di sini.
             </p>
           </motion.div>
@@ -330,10 +377,10 @@ export default function SessionTwo({ onRequireAuth }: SessionTwoProps) {
           <motion.form
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, margin: "-50px" }}
-            transition={{ delay: 0.1 }}
+            viewport={{ once: false, amount: 0.15 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
             onSubmit={handleFeedbackSubmit}
-            className="mt-10 rounded-3xl border border-white/25 bg-gradient-to-b from-white/12 to-white/[0.03] p-5 sm:p-7 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] shadow-inner text-left"
+            className="mt-10 rounded-3xl border border-white/25 bg-gradient-to-b from-white/12 to-white/[0.03] p-5 text-left shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] shadow-inner backdrop-blur-xl sm:p-7"
           >
             {/* Kategori chips */}
             <div className="mb-4 flex flex-wrap gap-2.5">
@@ -381,22 +428,21 @@ export default function SessionTwo({ onRequireAuth }: SessionTwoProps) {
               required
             />
 
-            <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="mt-4 flex flex-col items-center justify-between gap-3 sm:flex-row">
               <span className="text-xs font-medium text-stone-400">
                 Masukanmu akan ditinjau langsung oleh Admin & Operator Studio.
               </span>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full sm:w-auto shrink-0 rounded-full bg-orange-600 px-8 py-3 text-xs sm:text-sm font-extrabold text-white shadow-lg shadow-orange-600/30 transition hover:bg-orange-500 active:scale-95 disabled:opacity-70"
+                className="w-full shrink-0 rounded-full bg-orange-600 px-8 py-3 text-xs font-extrabold text-white shadow-lg shadow-orange-600/30 transition hover:bg-orange-500 active:scale-95 disabled:opacity-70 sm:w-auto sm:text-sm"
               >
-                {isSubmitting ? <Loader2 className="animate-spin mx-auto h-5 w-5" /> : 'Kirim Aspirasi'}
+                {isSubmitting ? <Loader2 className="mx-auto h-5 w-5 animate-spin" /> : 'Kirim Aspirasi'}
               </button>
             </div>
           </motion.form>
         </div>
       </div>
-
     </section>
   );
 }

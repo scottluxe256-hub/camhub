@@ -1,16 +1,146 @@
 <!doctype html>
-<html lang="en">
+<html lang="id">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>peminjamankameraishaq</title>
-    <!-- Eruda Mobile DevTools -->
-    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-    <script>eruda.init();</script>
+    <title>CamHub — Peminjaman Kamera</title>
+    <style>
+      #camhub-boot-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 9990;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-color: #ffffff;
+        font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+        user-select: none;
+        pointer-events: none;
+      }
+      #camhub-boot-loader.is-refresh {
+        background-color: rgba(250, 250, 249, 0.88);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+      }
+      #camhub-boot-first {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+      }
+      #camhub-boot-loading-text {
+        font-size: 15px;
+        line-height: 20px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        color: #000000;
+        animation: camhubBlink 0.52s ease-in-out infinite alternate;
+      }
+      #camhub-boot-percent {
+        font-size: 16px;
+        line-height: 22px;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        color: #000000;
+      }
+      #camhub-boot-refresh {
+        display: none;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 20px;
+        border-radius: 9999px;
+        background-color: #ffffff;
+        border: 1px solid rgba(234, 88, 12, 0.22);
+        box-shadow: 0 8px 24px rgba(234, 88, 12, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+      }
+      #camhub-boot-spinner {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 2.5px solid #fed7aa;
+        border-top-color: #ea580c;
+        animation: camhubSpin 0.65s linear infinite;
+      }
+      #camhub-boot-refresh-text {
+        font-size: 13px;
+        line-height: 18px;
+        font-weight: 600;
+        color: #1c1917;
+        letter-spacing: 0.01em;
+      }
+      @keyframes camhubBlink {
+        0% { opacity: 1; }
+        100% { opacity: 0.15; }
+      }
+      @keyframes camhubSpin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
   </head>
   <body>
+    <!-- PRE-REACT BOOT LOADER -->
+    <div id="camhub-boot-loader" aria-hidden="true">
+      <!-- Tampilan Kunjungan Pertama -->
+      <div id="camhub-boot-first">
+        <div id="camhub-boot-loading-text">Loading</div>
+        <div id="camhub-boot-percent">0%</div>
+      </div>
+
+      <!-- Tampilan Simpel Saat Refresh -->
+      <div id="camhub-boot-refresh">
+        <div id="camhub-boot-spinner"></div>
+        <span id="camhub-boot-refresh-text">Memuat CamHub...</span>
+      </div>
+    </div>
+
     <div id="root"></div>
+
+    <!-- ERUDA MOBILE CONSOLE / DEVTOOLS (ICON PENGATURAN POJOK KANAN BAWAH) -->
+    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+    <script>
+      if (window.eruda) {
+        window.eruda.init();
+      }
+    </script>
+
+    <!-- DETEKSI KUNJUNGAN PERTAMA VS REFRESH & PROGRESS RENDER -->
+    <script>
+      (function () {
+        var isRefresh = false;
+        try {
+          isRefresh = sessionStorage.getItem('camhub_splash_seen') === '1';
+        } catch (e) {}
+
+        window.__CAMHUB_IS_REFRESH__ = isRefresh;
+        window.__CAMHUB_BOOT_PROGRESS__ = 0;
+
+        var loaderEl = document.getElementById('camhub-boot-loader');
+        var firstEl = document.getElementById('camhub-boot-first');
+        var refreshEl = document.getElementById('camhub-boot-refresh');
+        var percentEl = document.getElementById('camhub-boot-percent');
+
+        if (isRefresh) {
+          if (loaderEl) loaderEl.classList.add('is-refresh');
+          if (firstEl) firstEl.style.display = 'none';
+          if (refreshEl) refreshEl.style.display = 'flex';
+          return;
+        }
+
+        var progress = 0;
+        var timer = setInterval(function () {
+          if (window.__CAMHUB_REACT_READY__) {
+            clearInterval(timer);
+            return;
+          }
+          var step = progress < 50 ? 7 : progress < 80 ? 3 : 1;
+          progress = Math.min(92, progress + step);
+          window.__CAMHUB_BOOT_PROGRESS__ = progress;
+          if (percentEl) percentEl.textContent = progress + '%';
+        }, 45);
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
