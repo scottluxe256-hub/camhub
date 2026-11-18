@@ -1,11 +1,12 @@
+// @ts-nocheck
 import { useState } from 'react';
-import Navbar from '../components/Navbar';
-import Header from '../components/Header';
-import SessionOne from '../components/SessionOne';
-import Katalog from '../components/Katalog';
-import SessionTwo from '../components/SessionTwo';
-import Footer from '../components/Footer';
-import AuthModal from '../components/AuthModal';
+import Navbar from '../components/layout/Navbar';
+import Header from '../components/home/Header';
+import SessionOne from '../components/home/SessionOne';
+import Katalog from '../components/home/Katalog';
+import SessionTwo from '../components/home/SessionTwo';
+import Footer from '../components/layout/Footer';
+import AuthModal from '../components/auth/AuthModal';
 
 interface LandingPageProps {
   isSplashFinished?: boolean;

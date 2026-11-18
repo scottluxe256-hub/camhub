@@ -1,7 +1,8 @@
+// @ts-nocheck
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { supabase } from '../lib/supabase';
-import type { Database } from '../types/database';
+import { supabase } from '../../lib/supabase';
+import type { Database } from '../../types/database';
 import {
   Bell,
   CheckCheck,

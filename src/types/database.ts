@@ -178,3 +178,5 @@ export interface Database {
     }
   }
 }
+
+export type ProfileItem = Database['public']['Tables']['profiles']['Row'];

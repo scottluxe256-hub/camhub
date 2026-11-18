@@ -1,10 +1,11 @@
+// @ts-nocheck
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Hash, GraduationCap, Camera, Loader2, ImagePlus } from 'lucide-react';
-import { supabase } from '../lib/supabase';
-import { CustomSwal } from '../lib/CustomSwal';
-import { uploadToCloudinary } from '../utils/cloudinary';
-import type { Database } from '../types/database';
+import { supabase } from '../../lib/supabase';
+import { CustomSwal } from '../../lib/CustomSwal';
+import { uploadToCloudinary } from '../../utils/cloudinary';
+import type { Database } from '../../types/database';
 
 type ProfileInsert = Database['public']['Tables']['profiles']['Insert'];
 

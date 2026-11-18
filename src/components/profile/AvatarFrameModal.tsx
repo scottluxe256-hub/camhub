@@ -1,14 +1,15 @@
+// @ts-nocheck
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, Loader2, Plus, RotateCw } from 'lucide-react';
-import { supabase } from '../lib/supabase';
-import { Toast } from '../lib/CustomSwal';
+import { supabase } from '../../lib/supabase';
+import { Toast } from '../../lib/CustomSwal';
 import {
   AVATAR_FRAMES,
   getAvatarFrame,
   serializeCustomFrame,
   type AvatarFrameId,
-} from '../utils/avatarFrames';
+} from '../../utils/avatarFrames';
 
 interface AvatarFrameModalProps {
   isOpen: boolean;

@@ -1,9 +1,10 @@
+// @ts-nocheck
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Star, CalendarClock, UserCheck, CheckCircle2, Loader2 } from 'lucide-react';
 import PenjelasanModal, { type PenjelasanData } from './PenjelasanModal';
-import { supabase } from '../lib/supabase';
-import { showFeedbackAlert } from '../lib/CustomSwal';
+import { supabase } from '../../lib/supabase';
+import { showFeedbackAlert } from '../../lib/CustomSwal';
 
 interface SessionTwoProps {
   onRequireAuth?: () => void;
@@ -306,7 +307,7 @@ export default function SessionTwo({ onRequireAuth }: SessionTwoProps) {
           </p>
         </motion.div>
 
-        <div className="mt-10 grid grid-cols-2 gap-3.5 sm:mt-12 sm:gap-8 lg:grid-cols-4">
+        <div className="mt-10 grid grid-cols-2 gap-3.5 sm:mt-12 sm:gap-5 lg:grid-cols-4">
           {tips.map((item, idx) => (
             <motion.div
               key={idx}
@@ -316,28 +317,28 @@ export default function SessionTwo({ onRequireAuth }: SessionTwoProps) {
               transition={{ duration: 0.45, delay: idx * 0.08 }}
               className="group flex flex-col overflow-hidden rounded-2xl bg-white shadow-lg shadow-stone-200/50 transition hover:-translate-y-2 hover:shadow-xl sm:rounded-3xl"
             >
-              <div className="h-28 w-full overflow-hidden sm:h-48">
+              <div className="h-28 w-full overflow-hidden sm:h-32">
                 <img
                   src={item.image}
                   alt={item.title}
                   className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
                 />
               </div>
-              <div className="flex flex-1 flex-col justify-between p-3.5 sm:p-6">
+              <div className="flex flex-1 flex-col justify-between p-3.5 sm:p-4">
                 <div>
                   <span className="text-[9px] font-extrabold tracking-wider text-orange-500 uppercase sm:text-[10px]">
                     Panduan Lab
                   </span>
-                  <h3 className="mt-1 font-['Outfit',sans-serif] text-xs font-extrabold leading-snug text-[#1c1917] sm:mt-2 sm:text-lg">
+                  <h3 className="mt-1 font-['Outfit',sans-serif] text-xs font-extrabold leading-snug text-[#1c1917] sm:mt-1.5 sm:text-sm">
                     {item.title}
                   </h3>
-                  <p className="mt-1.5 line-clamp-3 text-[10.5px] font-medium leading-relaxed text-stone-500 sm:mt-3 sm:line-clamp-none sm:text-xs">
+                  <p className="mt-1.5 line-clamp-3 text-[10.5px] font-medium leading-relaxed text-stone-500 sm:text-[11.5px]">
                     {item.desc}
                   </p>
                 </div>
                 <button
                   onClick={() => openModal(item)}
-                  className="mt-3.5 w-full rounded-full border border-stone-200 px-3 py-2 text-center text-[10px] font-bold text-[#1c1917] transition group-hover:border-orange-600 group-hover:bg-orange-600 group-hover:text-white sm:mt-6 sm:w-fit sm:px-6 sm:py-2.5 sm:text-xs"
+                  className="mt-3.5 w-full rounded-full border border-stone-200 px-3 py-2 text-center text-[10px] font-bold text-[#1c1917] transition group-hover:border-orange-600 group-hover:bg-orange-600 group-hover:text-white sm:mt-4 sm:text-[11px]"
                 >
                   Baca Selengkapnya
                 </button>

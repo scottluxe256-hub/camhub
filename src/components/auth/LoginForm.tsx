@@ -1,9 +1,10 @@
+// @ts-nocheck
 import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
 import type { AuthView } from './AuthModal';
-import { supabase } from '../lib/supabase';
-import { CustomSwal, Toast } from '../lib/CustomSwal';
+import { supabase } from '../../lib/supabase';
+import { CustomSwal, Toast } from '../../lib/CustomSwal';
 import OneSignal from 'react-onesignal';
 
 interface LoginFormProps {

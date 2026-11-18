@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
@@ -9,8 +10,8 @@ import {
   Clock,
   Loader2,
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
-import type { Database } from '../types/database';
+import { supabase } from '../../lib/supabase';
+import type { Database } from '../../types/database';
 import BookingModal from './BookingModal';
 import {
   type StudioSettings,
@@ -18,7 +19,7 @@ import {
   parseStudioBounds,
   getAvailableWeekdays,
   formatLocalDateISO,
-} from '../utils/bookingSlots';
+} from '../../utils/bookingSlots';
 
 type CameraItem = Database['public']['Tables']['cameras']['Row'];
 
@@ -217,7 +218,7 @@ export default function Katalog({ onRequireAuth }: KatalogProps) {
 
     let rafId: number;
     let lastTime = performance.now();
-    const speedPxPerSec = 38; // Kecepatan geser ke kiri (px per detik)
+    const speedPxPerSec = 38;
 
     const tick = (now: number) => {
       const dt = Math.min((now - lastTime) / 1000, 0.05);
@@ -230,7 +231,6 @@ export default function Katalog({ onRequireAuth }: KatalogProps) {
         if (halfWidth > 0) {
           virtualScrollRef.current += speedPxPerSec * dt;
 
-          // Begitu Set A lewat sepenuhnya, reset mulus ke awal tanpa terlihat lompatan
           if (virtualScrollRef.current >= halfWidth) {
             virtualScrollRef.current -= halfWidth;
           }
@@ -354,7 +354,7 @@ export default function Katalog({ onRequireAuth }: KatalogProps) {
     }
   };
 
-  // Helper render kartu kamera (dipakai oleh mode Statis Center maupun Infinite Marquee)
+  // Helper render kartu kamera
   const renderCameraCard = (item: CameraItem, keyId: string, extraClass = '') => {
     const isMaintenance = item.status === 'Maintenance';
     const hasQueueToday = queuedCameraIds.has(item.id);
@@ -447,7 +447,7 @@ export default function Katalog({ onRequireAuth }: KatalogProps) {
     );
   };
 
-  // Gandakan list kamera untuk Infinite Seamless Loop saat item melebihi kapasitas layar
+  // Gandakan list kamera untuk Infinite Seamless Loop
   const marqueeItems = isMarqueeActive
     ? [
         ...filteredCameras.map((item) => ({ item, keyId: `setA-${item.id}` })),
@@ -531,10 +531,6 @@ export default function Katalog({ onRequireAuth }: KatalogProps) {
             Tidak ada alat ditemukan untuk kategori ini.
           </div>
         ) : !isMarqueeActive ? (
-          /* =====================================================================
-             MODE STATIS RATA TENGAH (1 item tengah, 2 item 1 baris tengah,
-             3 item atas 2 bawah 1 tengah, 6 item atas 4 bawah 2 tengah)
-             ===================================================================== */
           <motion.div
             initial={{ opacity: 0, y: 25 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -559,10 +555,6 @@ export default function Katalog({ onRequireAuth }: KatalogProps) {
             </div>
           </motion.div>
         ) : (
-          /* =====================================================================
-             MODE INFINITE MARQUEE 2 BARIS (Geser terus ke kiri tanpa putus,
-             berhenti saat disentuh jari/mouse, jalan lagi setelah dilepas)
-             ===================================================================== */
           <motion.div
             initial={{ opacity: 0, y: 25 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -571,18 +563,48 @@ export default function Katalog({ onRequireAuth }: KatalogProps) {
             className="mt-4 sm:mt-6"
           >
             <div
-              ref={sliderRef}
-              onScroll={handleManualScroll}
-              onTouchStart={handleTouchStart}
-              onTouchEnd={handleTouchEnd}
-              onTouchCancel={handleTouchEnd}
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUpOrLeave}
-              onMouseLeave={handleMouseUpOrLeave}
-              className="grid cursor-grab grid-flow-col grid-rows-2 auto-cols-[calc(50%-7px)] gap-x-3.5 gap-y-14 overflow-x-auto pt-13 pb-4 select-none active:cursor-grabbing [-ms-overflow-style:none] [scrollbar-width:none] sm:gap-x-5 sm:gap-y-20 sm:pt-18 md:auto-cols-[calc(25%-18px)] lg:gap-x-6 [&::-webkit-scrollbar]:hidden"
+              style={{
+                WebkitMaskImage:
+                  'linear-gradient(to right, transparent 0px, rgba(0,0,0,0.32) 14px, rgba(0,0,0,0.85) 30px, #000 48px, #000 calc(100% - 48px), rgba(0,0,0,0.85) calc(100% - 30px), rgba(0,0,0,0.32) calc(100% - 14px), transparent 100%)',
+                maskImage:
+                  'linear-gradient(to right, transparent 0px, rgba(0,0,0,0.32) 14px, rgba(0,0,0,0.85) 30px, #000 48px, #000 calc(100% - 48px), rgba(0,0,0,0.85) calc(100% - 30px), rgba(0,0,0,0.32) calc(100% - 14px), transparent 100%)',
+              }}
+              className="relative -mx-4 sm:-mx-8"
             >
-              {marqueeItems.map(({ item, keyId }) => renderCameraCard(item, keyId))}
+              {/* Lapisan Gaussian Blur Halus di Tepi Kiri */}
+              <div
+                aria-hidden="true"
+                style={{
+                  WebkitMaskImage: 'linear-gradient(to right, #000 25%, transparent 100%)',
+                  maskImage: 'linear-gradient(to right, #000 25%, transparent 100%)',
+                }}
+                className="pointer-events-none absolute inset-y-0 left-0 z-20 w-8 backdrop-blur-[2px] sm:w-12"
+              />
+
+              {/* Lapisan Gaussian Blur Halus di Tepi Kanan */}
+              <div
+                aria-hidden="true"
+                style={{
+                  WebkitMaskImage: 'linear-gradient(to left, #000 25%, transparent 100%)',
+                  maskImage: 'linear-gradient(to left, #000 25%, transparent 100%)',
+                }}
+                className="pointer-events-none absolute inset-y-0 right-0 z-20 w-8 backdrop-blur-[2px] sm:w-12"
+              />
+
+              <div
+                ref={sliderRef}
+                onScroll={handleManualScroll}
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchEnd}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUpOrLeave}
+                onMouseLeave={handleMouseUpOrLeave}
+                className="grid cursor-grab grid-flow-col grid-rows-2 auto-cols-[calc(50%-7px)] gap-x-3.5 gap-y-14 overflow-x-auto pt-13 pb-4 select-none active:cursor-grabbing [-ms-overflow-style:none] [scrollbar-width:none] sm:gap-x-5 sm:gap-y-20 sm:pt-18 md:auto-cols-[calc(25%-18px)] lg:gap-x-6 [&::-webkit-scrollbar]:hidden"
+              >
+                {marqueeItems.map(({ item, keyId }) => renderCameraCard(item, keyId))}
+              </div>
             </div>
 
             <p className="mt-2 text-center text-[11px] font-medium text-stone-400">

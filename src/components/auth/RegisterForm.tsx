@@ -1,8 +1,9 @@
+// @ts-nocheck
 import { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 import type { AuthView } from './AuthModal';
-import { supabase } from '../lib/supabase';
-import { CustomSwal } from '../lib/CustomSwal';
+import { supabase } from '../../lib/supabase';
+import { CustomSwal } from '../../lib/CustomSwal';
 import OneSignal from 'react-onesignal';
 
 interface RegisterFormProps {

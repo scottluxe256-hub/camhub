@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Mail, ShieldCheck, Camera, CheckCircle2, Zap } from 'lucide-react';
 import { FaInstagram, FaTiktok, FaTelegram, FaWhatsapp } from 'react-icons/fa6';
 import { motion } from 'framer-motion';

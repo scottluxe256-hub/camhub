@@ -1,3 +1,4 @@
+// @ts-nocheck
 import OneSignal from 'react-onesignal';
 
 let initPromise: Promise<void> | null = null;

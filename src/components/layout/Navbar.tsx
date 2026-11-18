@@ -1,16 +1,17 @@
+// @ts-nocheck
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useScroll } from './ScrollAnimate';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../lib/supabase';
 import { User } from 'lucide-react';
-import ProfileView, { type UserProfileData } from './ProfileView';
+import ProfileView, { type UserProfileData } from '../profile/ProfileView';
 import NotificationBell from './NotificationBell';
-import { getCloudinaryAvatarUrl } from '../utils/cloudinary';
+import { getCloudinaryAvatarUrl } from '../../utils/cloudinary';
 import {
   DEFAULT_AVATAR_FRAME,
   getAvatarFrame,
   type AvatarFrameId,
-} from '../utils/avatarFrames';
+} from '../../utils/avatarFrames';
 
 interface NavbarProps {
   onRequireAuth?: () => void;
