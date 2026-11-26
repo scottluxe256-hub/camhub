@@ -264,7 +264,7 @@ export default function SessionOne() {
             {/* KARAKTER TENGAH */}
             <div
               ref={mascotRef}
-              className="pointer-events-none relative z-10 col-start-2 row-span-3 row-start-1 flex h-[540px] w-[304px] shrink-0 items-end justify-center self-end lg:h-[780px] lg:w-[439px]"
+              className="pointer-events-none relative z-10 col-start-2 row-span-3 row-start-1 -mx-6 flex h-[675px] w-[380px] shrink-0 items-end justify-center self-end lg:-mx-10 lg:h-[1000px] lg:w-[562px]"
             >
               <motion.div
                 initial={false}
@@ -284,7 +284,7 @@ export default function SessionOne() {
                 style={{ willChange: 'transform, opacity' }}
                 className="h-full w-full"
               >
-                <IshaqMascot className="relative top-[12px] z-20 h-full w-full lg:top-[16px]" />
+                <IshaqMascot className="relative top-[15px] z-20 h-full w-full lg:top-[21px]" />
               </motion.div>
             </div>
 
