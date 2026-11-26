@@ -1,4 +1,3 @@
-// @ts-nocheck
 export const DEG2RAD = Math.PI / 180;
 export const PLANE_W = 1.8;
 export const PLANE_H = 3.2;

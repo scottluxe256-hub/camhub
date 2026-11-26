@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Hash, GraduationCap, Camera, Loader2, ImagePlus } from 'lucide-react';

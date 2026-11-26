@@ -1,4 +1,3 @@
-// @ts-nocheck
 import JsBarcode from 'jsbarcode';
 
 export interface DataStrukCamHub {

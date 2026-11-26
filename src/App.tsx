@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useEffect, useState } from 'react';
 import LandingPage from './pages/LandingPage';
 import OnboardingModal from './components/auth/OnboardingModal';

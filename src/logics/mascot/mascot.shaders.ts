@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as THREE from 'three';
 
 export const VERTEX_SHADER = /* glsl */ `

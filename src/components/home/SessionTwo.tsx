@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Star, CalendarClock, UserCheck, CheckCircle2, Loader2 } from 'lucide-react';

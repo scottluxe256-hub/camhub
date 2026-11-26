@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useEffect, useRef } from 'react';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { ArrowLeft, Loader2, RotateCw, ShieldCheck, Send } from 'lucide-react';

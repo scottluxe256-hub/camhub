@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { createClient } from '@supabase/supabase-js';
 // Tambahkan kata "type" di sini:
 import type { Database } from '../types/database';

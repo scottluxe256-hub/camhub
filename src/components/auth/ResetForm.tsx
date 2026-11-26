@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { Lock, Loader2, Check } from 'lucide-react';
