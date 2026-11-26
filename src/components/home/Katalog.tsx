@@ -1,5 +1,4 @@
-// @ts-nocheck
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Aperture,
@@ -11,49 +10,29 @@ import {
   Loader2,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import type { Database } from '../../types/database';
 import BookingModal from './BookingModal';
 import {
-  type StudioSettings,
-  DEFAULT_STUDIO_SETTINGS,
-  parseStudioBounds,
-  getAvailableWeekdays,
-  formatLocalDateISO,
-} from '../../utils/bookingSlots';
-
-type CameraItem = Database['public']['Tables']['cameras']['Row'];
+  type CameraItem,
+  KATALOG_FILTERS,
+  matchesCameraFilter,
+} from '../../logics/katalog/katalog.config';
+import { useKatalogData } from '../../logics/katalog/useKatalogData';
+import { useKatalogMarquee } from '../../logics/katalog/useKatalogMarquee';
 
 interface KatalogProps {
   onRequireAuth?: () => void;
 }
 
 export default function Katalog({ onRequireAuth }: KatalogProps) {
-  const [cameras, setCameras] = useState<CameraItem[]>([]);
-  const [queuedCameraIds, setQueuedCameraIds] = useState<Set<string>>(new Set());
-  const [targetDateStr, setTargetDateStr] = useState<string>('');
-  const [loading, setLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState('Semua Alat');
-  const filters = ['Semua Alat', 'Paket Bundling', 'Kamera', 'Lensa', 'Aksesoris'];
+  const { cameras, queuedCameraIds, loading, refreshQueue } = useKatalogData();
 
+  const [activeFilter, setActiveFilter] = useState<string>('Semua Alat');
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [selectedCamera, setSelectedCamera] = useState<CameraItem | null>(null);
   const [isDesktopMd, setIsDesktopMd] = useState<boolean>(() =>
     typeof window !== 'undefined' ? window.innerWidth >= 768 : false
   );
 
-  // Refs untuk kontrol Infinite Marquee & sentuhan jari / drag mouse
-  const sliderRef = useRef<HTMLDivElement | null>(null);
-  const isInteractingRef = useRef(false);
-  const virtualScrollRef = useRef(0);
-  const resumeTimerRef = useRef<number | null>(null);
-
-  // Refs khusus drag mouse di desktop/landscape
-  const isMouseDownRef = useRef(false);
-  const dragStartXRef = useRef(0);
-  const dragStartScrollRef = useRef(0);
-  const hasDraggedRef = useRef(false);
-
-  // Deteksi ukuran layar (Portrait < 768px vs Landscape/Desktop >= 768px)
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 768px)');
     const onChange = (e: MediaQueryListEvent) => setIsDesktopMd(e.matches);
@@ -62,284 +41,33 @@ export default function Katalog({ onRequireAuth }: KatalogProps) {
     return () => mq.removeEventListener('change', onChange);
   }, []);
 
-  // 1. Ambil daftar unit kamera & sinkronkan tanggal operasional aktif dari studio_settings
-  useEffect(() => {
-    const syncTargetDate = (settings: StudioSettings) => {
-      const bounds = parseStudioBounds(settings);
-      const activeWeekdays = getAvailableWeekdays(bounds);
-      if (activeWeekdays.length > 0) {
-        setTargetDateStr(formatLocalDateISO(activeWeekdays[0]));
-      }
-    };
+  const filteredCameras = useMemo(
+    () => cameras.filter((item) => matchesCameraFilter(item, activeFilter)),
+    [cameras, activeFilter]
+  );
 
-    const initCatalog = async () => {
-      await fetchCameras();
-
-      const { data: settingsData } = await supabase
-        .from('studio_settings')
-        .select('jam_buka, jam_tutup, istirahat_mulai, istirahat_selesai')
-        .eq('id', 1)
-        .single();
-
-      syncTargetDate(settingsData || DEFAULT_STUDIO_SETTINGS);
-    };
-
-    initCatalog();
-
-    const cameraChannel = supabase
-      .channel('realtime_cameras_catalog')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'cameras' },
-        () => {
-          fetchCameras();
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'studio_settings',
-          filter: 'id=eq.1',
-        },
-        (payload) => {
-          if (payload.new) {
-            syncTargetDate(payload.new as StudioSettings);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(cameraChannel);
-    };
-  }, []);
-
-  // 2. Cek antrian harian pada tanggal operasional aktif & pantau realtime borrow_requests
-  useEffect(() => {
-    if (!targetDateStr) return;
-
-    fetchDailyQueue(targetDateStr);
-
-    const queueChannel = supabase
-      .channel(`realtime_queue_catalog_${targetDateStr}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'borrow_requests' },
-        () => {
-          fetchDailyQueue(targetDateStr);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(queueChannel);
-    };
-  }, [targetDateStr]);
-
-  const fetchCameras = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('cameras')
-        .select('*')
-        .order('created_at', { ascending: true });
-
-      if (error) throw error;
-      if (data) setCameras(data);
-    } catch (err) {
-      console.error('Gagal mengambil data kamera:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchDailyQueue = async (dateStr: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('borrow_requests')
-        .select('camera_id')
-        .eq('tanggal_pinjam', dateStr)
-        .in('status_request', ['Pending', 'Approved']);
-
-      if (error) throw error;
-
-      const ids = new Set<string>(
-        (data || [])
-          .map((row) => row.camera_id)
-          .filter((id): id is string => Boolean(id))
-      );
-      setQueuedCameraIds(ids);
-    } catch (err) {
-      console.error('Gagal mengecek antrian harian:', err);
-    }
-  };
-
-  const filterMatch = (item: CameraItem, filter: string) => {
-    if (filter === 'Semua Alat') return true;
-    if (!item.tipe) return false;
-    const t = item.tipe.toLowerCase();
-
-    if (filter === 'Kamera') return t.includes('kamera');
-    if (filter === 'Lensa') return t.includes('lensa');
-    if (filter === 'Paket Bundling') return t.includes('paket') || t.includes('bundling');
-    if (filter === 'Aksesoris') {
-      return (
-        t.includes('gimbal') ||
-        t.includes('stabilizer') ||
-        t.includes('mic') ||
-        t.includes('audio') ||
-        t.includes('tripod') ||
-        t.includes('aksesoris') ||
-        t.includes('lighting')
-      );
-    }
-    return t.includes(filter.toLowerCase());
-  };
-
-  const filteredCameras = cameras.filter((item) => filterMatch(item, activeFilter));
-
-  // Kapasitas tampilan diam: Portrait maksimal 4 (2x2), Landscape/Desktop maksimal 8 (4x2)
   const maxStaticItems = isDesktopMd ? 8 : 4;
   const isMarqueeActive = filteredCameras.length > maxStaticItems;
 
-  // Reset posisi scroll saat kategori filter atau orientasi berubah
-  useEffect(() => {
-    const el = sliderRef.current;
-    if (!el) return;
-    el.scrollLeft = 0;
-    virtualScrollRef.current = 0;
-    isInteractingRef.current = false;
-  }, [activeFilter, filteredCameras.length, isMarqueeActive]);
-
-  // Mesin Infinite Loop Marquee (geser terus-menerus ke kiri tanpa putus)
-  useEffect(() => {
-    if (loading || !isMarqueeActive) return;
-
-    let rafId: number;
-    let lastTime = performance.now();
-    const speedPxPerSec = 38;
-
-    const tick = (now: number) => {
-      const dt = Math.min((now - lastTime) / 1000, 0.05);
-      lastTime = now;
-
-      const el = sliderRef.current;
-      if (el && !isInteractingRef.current && !isBookingModalOpen) {
-        const halfWidth = el.scrollWidth / 2;
-
-        if (halfWidth > 0) {
-          virtualScrollRef.current += speedPxPerSec * dt;
-
-          if (virtualScrollRef.current >= halfWidth) {
-            virtualScrollRef.current -= halfWidth;
-          }
-
-          el.scrollLeft = virtualScrollRef.current;
-        }
-      }
-
-      rafId = requestAnimationFrame(tick);
-    };
-
-    rafId = requestAnimationFrame(tick);
-
-    return () => {
-      cancelAnimationFrame(rafId);
-      if (resumeTimerRef.current) {
-        window.clearTimeout(resumeTimerRef.current);
-      }
-    };
-  }, [loading, isMarqueeActive, isBookingModalOpen]);
-
-  // Jaga agar saat user menggeser manual sampai ujung Set A/B tetap mulus berputar
-  const handleManualScroll = () => {
-    if (!isInteractingRef.current || !sliderRef.current) return;
-    const el = sliderRef.current;
-    const halfWidth = el.scrollWidth / 2;
-    if (halfWidth <= 0) return;
-
-    if (el.scrollLeft >= halfWidth) {
-      el.scrollLeft -= halfWidth;
-    } else if (el.scrollLeft <= 1) {
-      el.scrollLeft += halfWidth;
-    }
-    virtualScrollRef.current = el.scrollLeft;
-  };
-
-  // Handler sentuhan jari (Mobile)
-  const handleTouchStart = () => {
-    if (resumeTimerRef.current) {
-      window.clearTimeout(resumeTimerRef.current);
-      resumeTimerRef.current = null;
-    }
-    isInteractingRef.current = true;
-  };
-
-  const handleTouchEnd = () => {
-    if (resumeTimerRef.current) {
-      window.clearTimeout(resumeTimerRef.current);
-    }
-    resumeTimerRef.current = window.setTimeout(() => {
-      if (sliderRef.current) {
-        virtualScrollRef.current = sliderRef.current.scrollLeft;
-      }
-      isInteractingRef.current = false;
-    }, 900);
-  };
-
-  // Handler drag mouse (Desktop / Landscape)
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    const el = sliderRef.current;
-    if (!el) return;
-
-    if (resumeTimerRef.current) {
-      window.clearTimeout(resumeTimerRef.current);
-      resumeTimerRef.current = null;
-    }
-
-    isInteractingRef.current = true;
-    isMouseDownRef.current = true;
-    hasDraggedRef.current = false;
-    dragStartXRef.current = e.pageX;
-    dragStartScrollRef.current = el.scrollLeft;
-  };
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isMouseDownRef.current || !sliderRef.current) return;
-    const dx = e.pageX - dragStartXRef.current;
-    if (Math.abs(dx) > 6) {
-      hasDraggedRef.current = true;
-    }
-    sliderRef.current.scrollLeft = dragStartScrollRef.current - dx;
-  };
-
-  const handleMouseUpOrLeave = () => {
-    if (!isMouseDownRef.current) return;
-    isMouseDownRef.current = false;
-
-    if (resumeTimerRef.current) {
-      window.clearTimeout(resumeTimerRef.current);
-    }
-    resumeTimerRef.current = window.setTimeout(() => {
-      if (sliderRef.current) {
-        virtualScrollRef.current = sliderRef.current.scrollLeft;
-      }
-      isInteractingRef.current = false;
-    }, 900);
-  };
+  const {
+    sectionRef,
+    viewportRef,
+    trackRef,
+    consumeWasDragged,
+    handlers,
+  } = useKatalogMarquee({
+    active: !loading && isMarqueeActive && !isBookingModalOpen,
+    resetKey: `${activeFilter}-${filteredCameras.length}-${isDesktopMd}`,
+  });
 
   const handleOpenBooking = async (item: CameraItem) => {
-    if (hasDraggedRef.current) {
-      hasDraggedRef.current = false;
-      return;
-    }
+    if (consumeWasDragged()) return;
 
     const {
       data: { session },
     } = await supabase.auth.getSession();
     if (!session?.user) {
-      if (onRequireAuth) onRequireAuth();
+      onRequireAuth?.();
       return;
     }
 
@@ -349,12 +77,9 @@ export default function Katalog({ onRequireAuth }: KatalogProps) {
 
   const handleCloseBookingModal = () => {
     setIsBookingModalOpen(false);
-    if (targetDateStr) {
-      fetchDailyQueue(targetDateStr);
-    }
+    refreshQueue();
   };
 
-  // Helper render kartu kamera
   const renderCameraCard = (item: CameraItem, keyId: string, extraClass = '') => {
     const isMaintenance = item.status === 'Maintenance';
     const hasQueueToday = queuedCameraIds.has(item.id);
@@ -362,11 +87,11 @@ export default function Katalog({ onRequireAuth }: KatalogProps) {
     return (
       <div
         key={keyId}
-        className={`relative flex flex-col justify-between rounded-3xl bg-white p-3.5 pt-16 shadow-lg shadow-stone-200/60 transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-stone-300/60 sm:rounded-[2rem] sm:p-6 sm:pt-24 ${extraClass}`}
+        className={`relative flex flex-col justify-between rounded-3xl bg-white p-3.5 pt-16 shadow-md shadow-stone-200/70 transition-transform duration-300 hover:-translate-y-1 sm:rounded-[2rem] sm:p-6 sm:pt-24 ${extraClass}`}
       >
         {/* Badge Status */}
         <div
-          className={`absolute top-3 left-3 z-10 flex h-7 w-7 items-center justify-center rounded-xl border shadow-xs transition-transform hover:scale-110 sm:top-4 sm:left-4 sm:h-9 sm:w-9 sm:rounded-2xl ${
+          className={`absolute top-3 left-3 z-10 flex h-7 w-7 items-center justify-center rounded-xl border sm:top-4 sm:left-4 sm:h-9 sm:w-9 sm:rounded-2xl ${
             isMaintenance
               ? 'border-amber-200 bg-amber-50 text-amber-600'
               : hasQueueToday
@@ -395,13 +120,15 @@ export default function Katalog({ onRequireAuth }: KatalogProps) {
           {item.kode_inventaris}
         </span>
 
-        {/* Foto Produk Melayang */}
+        {/* Foto Produk Melayang (tanpa filter drop-shadow berat agar 60fps saat berjalan) */}
         <div className="pointer-events-none absolute -top-11 left-1/2 h-28 w-28 -translate-x-1/2 sm:-top-16 sm:h-44 sm:w-44">
           <img
             src={item.image_url || '/kamera.webp'}
             alt={item.nama_barang}
             draggable={false}
-            className="h-full w-full object-contain drop-shadow-xl transition-transform duration-500 sm:drop-shadow-2xl"
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-contain"
             onError={(e) => {
               (e.currentTarget as HTMLImageElement).src = '/kamera.webp';
             }}
@@ -437,7 +164,7 @@ export default function Katalog({ onRequireAuth }: KatalogProps) {
           ) : (
             <button
               onClick={() => handleOpenBooking(item)}
-              className="flex w-full items-center justify-center gap-1.5 rounded-full bg-orange-600 px-3 py-2 text-[10.5px] font-bold text-white shadow-lg shadow-orange-600/30 transition hover:bg-orange-500 hover:shadow-orange-600/40 active:scale-95 sm:gap-2 sm:px-6 sm:py-3 sm:text-xs"
+              className="flex w-full items-center justify-center gap-1.5 rounded-full bg-orange-600 px-3 py-2 text-[10.5px] font-bold text-white shadow-md shadow-orange-600/25 transition hover:bg-orange-500 active:scale-95 sm:gap-2 sm:px-6 sm:py-3 sm:text-xs"
             >
               <Zap className="h-3.5 w-3.5 shrink-0 fill-white/20 sm:h-4 sm:w-4" /> Pinjam
             </button>
@@ -447,16 +174,19 @@ export default function Katalog({ onRequireAuth }: KatalogProps) {
     );
   };
 
-  // Gandakan list kamera untuk Infinite Seamless Loop
-  const marqueeItems = isMarqueeActive
-    ? [
-        ...filteredCameras.map((item) => ({ item, keyId: `setA-${item.id}` })),
-        ...filteredCameras.map((item) => ({ item, keyId: `setB-${item.id}` })),
-      ]
-    : [];
+  const marqueeItems = useMemo(
+    () =>
+      isMarqueeActive
+        ? [
+            ...filteredCameras.map((item) => ({ item, keyId: `setA-${item.id}` })),
+            ...filteredCameras.map((item) => ({ item, keyId: `setB-${item.id}` })),
+          ]
+        : [],
+    [filteredCameras, isMarqueeActive]
+  );
 
   return (
-    <section id="katalog" className="bg-[#fafaf9] py-16 sm:py-24">
+    <section ref={sectionRef} id="katalog" className="bg-[#fafaf9] py-16 sm:py-24">
       <BookingModal
         isOpen={isBookingModalOpen}
         onClose={handleCloseBookingModal}
@@ -492,7 +222,7 @@ export default function Katalog({ onRequireAuth }: KatalogProps) {
           transition={{ duration: 0.6, delay: 0.15 }}
           className="mt-10 flex flex-wrap justify-center gap-5 sm:gap-10"
         >
-          {filters.map((filter) => (
+          {KATALOG_FILTERS.map((filter) => (
             <motion.button
               key={filter}
               onClick={() => setActiveFilter(filter)}
@@ -562,46 +292,32 @@ export default function Katalog({ onRequireAuth }: KatalogProps) {
             transition={{ duration: 0.6 }}
             className="mt-4 sm:mt-6"
           >
-            <div
-              style={{
-                WebkitMaskImage:
-                  'linear-gradient(to right, transparent 0px, rgba(0,0,0,0.32) 14px, rgba(0,0,0,0.85) 30px, #000 48px, #000 calc(100% - 48px), rgba(0,0,0,0.85) calc(100% - 30px), rgba(0,0,0,0.32) calc(100% - 14px), transparent 100%)',
-                maskImage:
-                  'linear-gradient(to right, transparent 0px, rgba(0,0,0,0.32) 14px, rgba(0,0,0,0.85) 30px, #000 48px, #000 calc(100% - 48px), rgba(0,0,0,0.85) calc(100% - 30px), rgba(0,0,0,0.32) calc(100% - 14px), transparent 100%)',
-              }}
-              className="relative -mx-4 sm:-mx-8"
-            >
-              {/* Lapisan Gaussian Blur Halus di Tepi Kiri */}
+            <div ref={viewportRef} className="relative -mx-4 overflow-hidden sm:-mx-8">
+              {/* Feather Gradient Halus di Tepi Kiri (0% beban blur GPU) */}
               <div
                 aria-hidden="true"
                 style={{
-                  WebkitMaskImage: 'linear-gradient(to right, #000 25%, transparent 100%)',
-                  maskImage: 'linear-gradient(to right, #000 25%, transparent 100%)',
+                  background:
+                    'linear-gradient(to right, #fafaf9 0%, rgba(250,250,249,0.92) 28%, rgba(255,255,255,0.45) 64%, rgba(250,250,249,0) 100%)',
                 }}
-                className="pointer-events-none absolute inset-y-0 left-0 z-20 w-8 backdrop-blur-[2px] sm:w-12"
+                className="pointer-events-none absolute inset-y-0 left-0 z-20 w-8 sm:w-14"
               />
 
-              {/* Lapisan Gaussian Blur Halus di Tepi Kanan */}
+              {/* Feather Gradient Halus di Tepi Kanan (0% beban blur GPU) */}
               <div
                 aria-hidden="true"
                 style={{
-                  WebkitMaskImage: 'linear-gradient(to left, #000 25%, transparent 100%)',
-                  maskImage: 'linear-gradient(to left, #000 25%, transparent 100%)',
+                  background:
+                    'linear-gradient(to left, #fafaf9 0%, rgba(250,250,249,0.92) 28%, rgba(255,255,255,0.45) 64%, rgba(250,250,249,0) 100%)',
                 }}
-                className="pointer-events-none absolute inset-y-0 right-0 z-20 w-8 backdrop-blur-[2px] sm:w-12"
+                className="pointer-events-none absolute inset-y-0 right-0 z-20 w-8 sm:w-14"
               />
 
               <div
-                ref={sliderRef}
-                onScroll={handleManualScroll}
-                onTouchStart={handleTouchStart}
-                onTouchEnd={handleTouchEnd}
-                onTouchCancel={handleTouchEnd}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUpOrLeave}
-                onMouseLeave={handleMouseUpOrLeave}
-                className="grid cursor-grab grid-flow-col grid-rows-2 auto-cols-[calc(50%-7px)] gap-x-3.5 gap-y-14 overflow-x-auto pt-13 pb-4 select-none active:cursor-grabbing [-ms-overflow-style:none] [scrollbar-width:none] sm:gap-x-5 sm:gap-y-20 sm:pt-18 md:auto-cols-[calc(25%-18px)] lg:gap-x-6 [&::-webkit-scrollbar]:hidden"
+                ref={trackRef}
+                {...handlers}
+                style={{ willChange: 'transform' }}
+                className="grid w-max cursor-grab grid-flow-col grid-rows-2 auto-cols-[164px] gap-x-3.5 gap-y-14 px-4 pt-13 pb-4 select-none active:cursor-grabbing sm:auto-cols-[220px] sm:gap-x-5 sm:gap-y-20 sm:px-8 sm:pt-18 md:auto-cols-[260px] lg:auto-cols-[288px] lg:gap-x-6"
               >
                 {marqueeItems.map(({ item, keyId }) => renderCameraCard(item, keyId))}
               </div>

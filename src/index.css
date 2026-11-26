@@ -17,125 +17,98 @@ html {
 }
 
 /* =========================================================
-   ANIMASI CAMHUB CPU HUB (SIKLUS 4 DETIK - 0% BLUR / 60 FPS)
+   ANIMASI IKON CAMHUB (SIKLUS 4 DETIK - 100% GPU / 0 REPAINT)
    ========================================================= */
 
-/* 1. Aliran listrik emas mengalir pelan (0% -> 65%) lalu masuk ke ikon */
-@keyframes circuitGoldStream {
-  0%, 5% {
-    stroke-dashoffset: 26;
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  65% {
-    stroke-dashoffset: -100;
-    opacity: 1;
-  }
-  76%, 100% {
-    stroke-dashoffset: -126;
-    opacity: 0;
-  }
-}
-
-/* 2. Cincin pulsa tipis (tanpa blur) mengembang saat energi tiba di 65% */
 @keyframes iconRingPulse {
-  0%, 64% {
+  0%, 65% {
     transform: scale(0.95);
     opacity: 0;
   }
-  68% {
+  70% {
     transform: scale(1.16);
-    opacity: 0.8;
+    opacity: 0.85;
   }
-  88%, 100% {
+  90%, 100% {
     transform: scale(1.38);
     opacity: 0;
   }
 }
 
-/* 3. Wadah ikon bulat menyala kilau emas hangat saat energi tiba di 65% */
-@keyframes iconCircleGoldIgnite {
-  0%, 64% {
-    background-color: #ffedd5;
-    color: #ea580c;
-    border-color: rgba(234, 179, 8, 0);
+@keyframes iconCirclePop {
+  0%, 65%, 94%, 100% {
     transform: scale(1);
   }
-  68% {
-    background-color: #fef08a;
-    color: #a16207;
-    border-color: rgba(234, 179, 8, 0.85);
+  70% {
     transform: scale(1.07);
-  }
-  92%, 100% {
-    background-color: #ffedd5;
-    color: #ea580c;
-    border-color: rgba(234, 179, 8, 0);
-    transform: scale(1);
   }
 }
 
-/* 4. Getaran tipis serentak untuk 5 ikon (65% -> 88%) */
-@keyframes iconMicroShake {
-  0%, 64%, 89%, 100% {
-    transform: rotate(0deg) translate3d(0, 0, 0);
-  }
-  67% {
-    transform: rotate(-6deg) translate3d(-0.6px, 0, 0);
+@keyframes iconGoldOverlayFlash {
+  0%, 65%, 94%, 100% {
+    opacity: 0;
   }
   70% {
+    opacity: 1;
+  }
+}
+
+@keyframes iconMicroShake {
+  0%, 65%, 91%, 100% {
+    transform: rotate(0deg) translate3d(0, 0, 0);
+  }
+  68% {
+    transform: rotate(-6deg) translate3d(-0.6px, 0, 0);
+  }
+  71% {
     transform: rotate(6deg) translate3d(0.6px, 0, 0);
   }
-  73% {
+  74% {
     transform: rotate(-5deg) translate3d(-0.5px, 0, 0);
   }
-  76% {
+  77% {
     transform: rotate(5deg) translate3d(0.5px, 0, 0);
   }
-  79% {
+  80% {
     transform: rotate(-3.5deg) translate3d(-0.3px, 0, 0);
   }
-  82% {
+  83% {
     transform: rotate(3.5deg) translate3d(0.3px, 0, 0);
   }
-  85% {
+  86% {
     transform: rotate(-2deg) translate3d(0, 0, 0);
   }
 }
 
-/* 5. Ayunan berdering khusus ikon Lonceng saat energi tiba (65% -> 92%) */
 @keyframes bellRingSwing {
-  0%, 64%, 93%, 100% {
+  0%, 65%, 95%, 100% {
     transform: rotate(0deg);
   }
-  68% {
+  69% {
     transform: rotate(15deg);
   }
-  72% {
+  73% {
     transform: rotate(-13deg);
   }
-  76% {
+  77% {
     transform: rotate(10deg);
   }
-  80% {
+  81% {
     transform: rotate(-8deg);
   }
-  84% {
+  85% {
     transform: rotate(5deg);
   }
-  88% {
+  89% {
     transform: rotate(-3deg);
   }
 }
 
-/* 6. Jarum jam & menit berputar lalu bertemu tepat di angka 12:00 pada 65% */
 @keyframes clockHourToTwelve {
   0%, 5% {
-    transform: rotate(215deg);
+    transform: rotate(0deg);
   }
-  65%, 100% {
+  66%, 100% {
     transform: rotate(360deg);
   }
 }
@@ -144,12 +117,11 @@ html {
   0%, 5% {
     transform: rotate(0deg);
   }
-  65%, 100% {
-    transform: rotate(360deg);
+  66%, 100% {
+    transform: rotate(720deg);
   }
 }
 
-/* 7. Animasi mikro berkelanjutan pada ponsel & radar */
 @keyframes phoneScanBeam {
   0%, 100% {
     transform: translateY(-2.5px);
