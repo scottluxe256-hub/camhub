@@ -146,7 +146,7 @@ export default function SessionOne() {
             </div>
 
             {/* BARIS 2 (TENGAH): FITUR KIRI - KARAKTER ISHAQ - FITUR KANAN */}
-            <div className="relative z-10 my-2 flex w-full items-center justify-between gap-1">
+            <div className="relative z-10 mt-3 mb-2 flex w-full items-center justify-between gap-1">
               <motion.div
                 initial={{ opacity: 0, x: -12 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -171,7 +171,7 @@ export default function SessionOne() {
 
               <div
                 ref={mascotRef}
-                className="pointer-events-none relative -mx-2 flex h-[312px] w-[176px] shrink-0 items-center justify-center"
+                className="pointer-events-none relative -mx-7 flex h-[405px] w-[228px] shrink-0 items-center justify-center sm:-mx-6 sm:h-[448px] sm:w-[252px]"
               >
                 <motion.div
                   initial={false}
@@ -191,7 +191,7 @@ export default function SessionOne() {
                   style={{ willChange: 'transform, opacity' }}
                   className="h-full w-full"
                 >
-                  <IshaqMascot className="relative z-20 h-full w-full" />
+                  <IshaqMascot className="relative top-[20px] z-20 h-full w-full sm:top-[24px]" />
                 </motion.div>
               </div>
 
