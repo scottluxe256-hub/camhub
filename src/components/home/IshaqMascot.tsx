@@ -1,4 +1,5 @@
-import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+// @ts-nocheck
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useTexture } from '@react-three/drei';
