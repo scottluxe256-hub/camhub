@@ -67,7 +67,7 @@ export default function AuthModal({ isOpen, onClose, defaultView = 'login' }: Au
         }
     };
 
-    const slideTransition = { type: "spring", stiffness: 100, damping: 20 };
+    const slideTransition = { type: 'spring' as const, stiffness: 100, damping: 20 };
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm">

@@ -12,7 +12,7 @@ export const initOneSignal = async () => {
       notifyButton: {
         enable: false, // Lonceng merah dimatikan total
       },
-      promptOptions: {
+    promptOptions: {
         slidedown: {
           prompts: [
             {

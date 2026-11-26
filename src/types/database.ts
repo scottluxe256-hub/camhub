@@ -37,6 +37,7 @@ export interface Database {
           foto_url?: string | null
           foto_public_id?: string | null
         }
+        Relationships: []
       }
       cameras: {
         Row: {
@@ -72,6 +73,7 @@ export interface Database {
           image_public_id?: string | null
           created_at?: string
         }
+        Relationships: []
       }
       borrow_requests: {
         Row: {
@@ -125,6 +127,7 @@ export interface Database {
           notif_final_warning_sent?: boolean
           created_at?: string
         }
+        Relationships: []
       }
       feedbacks: {
         Row: {
@@ -145,6 +148,7 @@ export interface Database {
           pesan?: string
           created_at?: string
         }
+        Relationships: []
       }
       studio_settings: {
         Row: {
@@ -174,9 +178,10 @@ export interface Database {
           updated_at?: string
           updated_by?: string | null
         }
+        Relationships: []
       }
     }
-        Views: {
+    Views: {
       [_ in never]: never
     }
     Functions: {
@@ -192,4 +197,3 @@ export interface Database {
 }
 
 export type ProfileItem = Database['public']['Tables']['profiles']['Row'];
- 

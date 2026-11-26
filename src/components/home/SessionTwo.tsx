@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Star, CalendarClock, UserCheck, CheckCircle2, Loader2 } from 'lucide-react';
 import PenjelasanModal, { type PenjelasanData } from './PenjelasanModal';
 import { supabase } from '../../lib/supabase';
+import { CustomSwal, showFeedbackAlert } from '../../lib/CustomSwal';
 import { showFeedbackAlert } from '../../lib/CustomSwal';
 
 interface SessionTwoProps {
