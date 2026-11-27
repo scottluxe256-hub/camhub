@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import LandingPage from './pages/LandingPage';
+import InputCamera from './InputCamera';
 import OnboardingModal from './components/auth/OnboardingModal';
 import SplashScreen, { SPLASH_SESSION_KEY } from './components/layout/SplashScreen';
 import { initOneSignal, setOneSignalUser, logoutOneSignal } from './lib/onesignal';
@@ -22,7 +23,17 @@ export default function App() {
   const [isRefreshVisit] = useState<boolean>(() => checkIsRefreshVisit());
   const [isSplashFinished, setIsSplashFinished] = useState(false);
 
-  // Sinkronisasi OneSignal di background (non-blocking) setiap status user berubah
+  const isEditCameraMode =
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('edit-kamera') === '1';
+
+  // Tutup pre-react boot loader jika masuk ke mode edit kamera (karena SplashScreen dilewati)
+  useEffect(() => {
+    if (!isEditCameraMode) return;
+    window.__CAMHUB_REACT_READY__ = true;
+    document.getElementById('camhub-boot-loader')?.remove();
+  }, [isEditCameraMode]);
+
   useEffect(() => {
     let active = true;
 
@@ -44,10 +55,11 @@ export default function App() {
     };
   }, [user?.id]);
 
-  // Otomatis deteksi wajib onboarding dari state global tanpa query ulang
-  const needsOnboarding = !loadingAuth && Boolean(user) && (!profile || !profile.nis);
+  if (isEditCameraMode) {
+    return <InputCamera />;
+  }
 
-  // Saat refresh, Navbar langsung siap di atas tanpa menunggu handover luncuran logo
+  const needsOnboarding = !loadingAuth && Boolean(user) && (!profile || !profile.nis);
   const isNavbarReady = isSplashFinished || isRefreshVisit;
 
   return (

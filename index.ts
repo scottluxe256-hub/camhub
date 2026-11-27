@@ -27,8 +27,9 @@ async function processCamHubReminders(env: Env) {
   const currentTotalMins = nowWIB.getUTCHours() * 60 + nowWIB.getUTCMinutes();
 
   // 2. Query ke Supabase via REST API
-  // Ambil data pinjaman aktif yang belum dikirim notif final (10 menit setelah habis)
-  const supabaseUrl = `${env.SUPABASE_URL}/rest/v1/borrow_requests?select=id,user_id,jam_selesai,notif_10m_sent,notif_expired_sent,notif_final_warning_sent,cameras(nama_barang)&status_request=eq.Dipinjam&notif_final_warning_sent=eq.false`;
+  // Ambil data pinjaman hari ini yang aktif & belum dikirim notif final
+  const todayWIB = nowWIB.toISOString().slice(0, 10); // Format YYYY-MM-DD WIB
+  const supabaseUrl = `${env.SUPABASE_URL}/rest/v1/borrow_requests?select=id,user_id,jam_selesai,notif_10m_sent,notif_expired_sent,notif_final_warning_sent,cameras(nama_barang)&tanggal_pinjam=eq.${todayWIB}&status_request=in.(Approved,Dipinjam)&notif_final_warning_sent=eq.false`;
 
   const reqResponse = await fetch(supabaseUrl, {
     headers: {

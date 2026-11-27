@@ -10,11 +10,14 @@ export function useKatalogMarquee({ active, resetKey }: UseKatalogMarqueeParams)
   const sectionRef = useRef<HTMLElement | null>(null);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
+  const primarySetRef = useRef<HTMLDivElement | null>(null);
+  const cloneSetRef = useRef<HTMLDivElement | null>(null);
 
   const [inView, setInView] = useState(true);
 
   const isInteractingRef = useRef(false);
   const virtualOffsetRef = useRef(0);
+  const loopWidthRef = useRef(0);
   const resumeTimerRef = useRef<number | null>(null);
 
   // Batas mentok kiri-kanan (sebatas 1 set katalog asli) saat dipegang user
@@ -32,6 +35,27 @@ export function useKatalogMarquee({ active, resetKey }: UseKatalogMarqueeParams)
     }
   }, []);
 
+  const measureLoopWidth = useCallback(() => {
+    const primary = primarySetRef.current;
+    const clone = cloneSetRef.current;
+    if (primary && clone) {
+      const exactSpan = clone.offsetLeft - primary.offsetLeft;
+      if (exactSpan > 0) {
+        loopWidthRef.current = exactSpan;
+        return exactSpan;
+      }
+    }
+
+    const track = trackRef.current;
+    if (track) {
+      const fallback = track.scrollWidth / 2;
+      loopWidthRef.current = fallback;
+      return fallback;
+    }
+
+    return 0;
+  }, []);
+
   // Pantau apakah section katalog sedang terlihat di layar
   useEffect(() => {
     const el = sectionRef.current;
@@ -45,17 +69,47 @@ export function useKatalogMarquee({ active, resetKey }: UseKatalogMarqueeParams)
     return () => observer.disconnect();
   }, []);
 
+  // Ukur ulang lebar tepat 1 siklus loop setiap kali ukuran layar/kartu berubah
+  useEffect(() => {
+    if (!active) {
+      loopWidthRef.current = 0;
+      return;
+    }
+
+    measureLoopWidth();
+
+    const track = trackRef.current;
+    if (!track || typeof ResizeObserver === 'undefined') return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      const prevLoop = loopWidthRef.current;
+      const nextLoop = measureLoopWidth();
+      if (nextLoop > 0 && prevLoop > 0 && virtualOffsetRef.current >= nextLoop) {
+        virtualOffsetRef.current = virtualOffsetRef.current % nextLoop;
+        applyTransform(virtualOffsetRef.current);
+      }
+    });
+
+    resizeObserver.observe(track);
+    return () => resizeObserver.disconnect();
+  }, [active, resetKey, measureLoopWidth, applyTransform]);
+
   // Reset posisi ke awal kiri setiap kali kategori filter atau ukuran layar berubah
   useEffect(() => {
     virtualOffsetRef.current = 0;
     isInteractingRef.current = false;
     hasDraggedRef.current = false;
     applyTransform(0);
-  }, [resetKey, active, applyTransform]);
+    measureLoopWidth();
+  }, [resetKey, active, applyTransform, measureLoopWidth]);
 
-  // Loop berjalan otomatis ke kiri via GPU translate3d
+  // Loop berjalan otomatis ke kiri via GPU translate3d (tanpa layout read di dalam rAF)
   useEffect(() => {
     if (!active || !inView) return;
+
+    if (loopWidthRef.current <= 0) {
+      measureLoopWidth();
+    }
 
     let rafId = 0;
     let lastTime = performance.now();
@@ -64,13 +118,12 @@ export function useKatalogMarquee({ active, resetKey }: UseKatalogMarqueeParams)
       const dt = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
 
-      const track = trackRef.current;
-      if (track && !isInteractingRef.current) {
-        const halfWidth = track.scrollWidth / 2;
-        if (halfWidth > 0) {
+      if (!isInteractingRef.current) {
+        const loopWidth = loopWidthRef.current || measureLoopWidth();
+        if (loopWidth > 0) {
           virtualOffsetRef.current += MARQUEE_SPEED_PX_PER_SEC * dt;
-          if (virtualOffsetRef.current >= halfWidth) {
-            virtualOffsetRef.current -= halfWidth;
+          if (virtualOffsetRef.current >= loopWidth) {
+            virtualOffsetRef.current -= loopWidth;
           }
           applyTransform(virtualOffsetRef.current);
         }
@@ -87,7 +140,7 @@ export function useKatalogMarquee({ active, resetKey }: UseKatalogMarqueeParams)
         window.clearTimeout(resumeTimerRef.current);
       }
     };
-  }, [active, inView, applyTransform]);
+  }, [active, inView, applyTransform, measureLoopWidth]);
 
   // Hitung batas mentok kiri & kanan untuk 1 set katalog asli saat user mulai menyentuh
   const beginManualControl = useCallback(
@@ -103,21 +156,19 @@ export function useKatalogMarquee({ active, resetKey }: UseKatalogMarqueeParams)
       dragStartXRef.current = clientX;
       dragStartYRef.current = clientY;
 
-      const track = trackRef.current;
       const viewport = viewportRef.current;
-      if (!track || !viewport) return;
+      const loopWidth = loopWidthRef.current || measureLoopWidth();
+      if (!viewport || loopWidth <= 0) return;
 
-      const halfWidth = track.scrollWidth / 2;
       const viewWidth = viewport.clientWidth;
-      if (halfWidth <= 0) return;
 
-      // Normalisasi posisi ke dalam 1 siklus [0, halfWidth) tanpa lompatan visual
+      // Normalisasi posisi ke dalam 1 siklus [0, loopWidth) tanpa lompatan visual
       const normalized =
-        ((virtualOffsetRef.current % halfWidth) + halfWidth) % halfWidth;
+        ((virtualOffsetRef.current % loopWidth) + loopWidth) % loopWidth;
       virtualOffsetRef.current = normalized;
       applyTransform(normalized);
 
-      const maxSpan = Math.max(0, halfWidth - viewWidth);
+      const maxSpan = Math.max(0, loopWidth - viewWidth);
       if (normalized <= maxSpan) {
         dragBoundsRef.current = { min: 0, max: maxSpan };
       } else {
@@ -129,7 +180,7 @@ export function useKatalogMarquee({ active, resetKey }: UseKatalogMarqueeParams)
 
       dragStartOffsetRef.current = normalized;
     },
-    [applyTransform]
+    [applyTransform, measureLoopWidth]
   );
 
   const scheduleAutoResume = useCallback(() => {
@@ -224,6 +275,8 @@ export function useKatalogMarquee({ active, resetKey }: UseKatalogMarqueeParams)
     sectionRef,
     viewportRef,
     trackRef,
+    primarySetRef,
+    cloneSetRef,
     consumeWasDragged,
     handlers: {
       onTouchStart,

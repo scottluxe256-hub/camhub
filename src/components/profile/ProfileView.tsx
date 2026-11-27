@@ -233,13 +233,25 @@ export default function ProfileView({
 
       if (oldPublicId) {
         try {
-          await fetch('/api/delete-image', {
+          const delRes = await fetch('/api/delete-image', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ public_id: oldPublicId }),
           });
+
+          const contentType = delRes.headers.get('content-type') || '';
+          if (!contentType.includes('application/json')) {
+            console.warn(
+              'Endpoint /api/delete-image tidak aktif (normal jika sedang jalan di localhost Vite).'
+            );
+          } else {
+            const delData = await delRes.json();
+            if (!delRes.ok || delData.result !== 'ok') {
+              console.warn('Cloudinary gagal menghapus foto lama:', delData);
+            }
+          }
         } catch (delErr) {
-          console.warn('Gagal menghapus file lama di Cloudinary:', delErr);
+          console.warn('Gagal menghubungi /api/delete-image:', delErr);
         }
       }
 

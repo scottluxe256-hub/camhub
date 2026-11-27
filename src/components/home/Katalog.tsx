@@ -53,6 +53,8 @@ export default function Katalog({ onRequireAuth }: KatalogProps) {
     sectionRef,
     viewportRef,
     trackRef,
+    primarySetRef,
+    cloneSetRef,
     consumeWasDragged,
     handlers,
   } = useKatalogMarquee({
@@ -115,18 +117,17 @@ export default function Katalog({ onRequireAuth }: KatalogProps) {
           )}
         </div>
 
-        {/* Kode Inventaris */}
-        <span className="absolute top-3.5 right-3.5 font-mono text-[9px] font-medium text-stone-400 sm:top-5 sm:right-5 sm:text-[10px]">
-          {item.kode_inventaris}
+        {/* Jumlah Stok Unit */}
+        <span className="absolute top-3.5 right-3.5 z-10 rounded-full bg-stone-100/90 px-2 py-0.5 text-[9px] font-bold text-stone-500 sm:top-5 sm:right-5 sm:px-2.5 sm:text-[10px]">
+          {Math.max(1, item.stok ?? 1)} Unit
         </span>
 
-        {/* Foto Produk Melayang (tanpa filter drop-shadow berat agar 60fps saat berjalan) */}
-        <div className="pointer-events-none absolute -top-11 left-1/2 h-28 w-28 -translate-x-1/2 sm:-top-16 sm:h-44 sm:w-44">
+        {/* Foto Produk Melayang */}
+        <div className="pointer-events-none absolute -top-11 left-1/2 z-10 h-28 w-28 -translate-x-1/2 sm:-top-16 sm:h-44 sm:w-44">
           <img
             src={item.image_url || '/kamera.webp'}
             alt={item.nama_barang}
             draggable={false}
-            loading="lazy"
             decoding="async"
             className="h-full w-full object-contain"
             onError={(e) => {
@@ -136,7 +137,7 @@ export default function Katalog({ onRequireAuth }: KatalogProps) {
         </div>
 
         {/* Nama & Kategori Alat */}
-        <div className="mt-2 flex w-full flex-col items-center text-center sm:mt-4">
+        <div className="relative z-10 mt-2 flex w-full flex-col items-center text-center sm:mt-4">
           <span className="line-clamp-1 text-[9px] font-bold tracking-widest text-stone-400 uppercase sm:text-[10px]">
             {item.tipe || 'Peralatan Lab'}
           </span>
@@ -146,7 +147,7 @@ export default function Katalog({ onRequireAuth }: KatalogProps) {
         </div>
 
         {/* Tombol Aksi */}
-        <div className="mt-4 flex w-full justify-center sm:mt-6">
+        <div className="relative z-10 mt-4 flex w-full justify-center sm:mt-6">
           {isMaintenance ? (
             <button
               disabled
@@ -170,23 +171,49 @@ export default function Katalog({ onRequireAuth }: KatalogProps) {
             </button>
           )}
         </div>
+
+        {/* Light Sweep Putih Polos 45° (Kiri Atas -> Kanan Bawah, perlahan & smooth serentak) */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 -top-11 bottom-0 z-20 overflow-hidden rounded-3xl sm:-top-16 sm:rounded-[2rem]"
+        >
+          <span
+            style={{
+              background:
+                'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.18) 18%, rgba(255,255,255,0.62) 36%, rgba(255,255,255,0.95) 50%, rgba(255,255,255,0.62) 64%, rgba(255,255,255,0.18) 82%, rgba(255,255,255,0) 100%)',
+              animation:
+                'katalogLightSweep 5.5s cubic-bezier(0.37, 0, 0.63, 1) infinite',
+            }}
+            className="absolute top-1/2 left-1/2 h-[600px] w-[115px] will-change-transform"
+          />
+        </div>
       </div>
     );
   };
 
-  const marqueeItems = useMemo(
-    () =>
-      isMarqueeActive
-        ? [
-            ...filteredCameras.map((item) => ({ item, keyId: `setA-${item.id}` })),
-            ...filteredCameras.map((item) => ({ item, keyId: `setB-${item.id}` })),
-          ]
-        : [],
-    [filteredCameras, isMarqueeActive]
-  );
+  const marqueeGridClasses =
+    'grid shrink-0 grid-flow-col grid-rows-2 auto-cols-[164px] gap-x-3.5 gap-y-14 sm:auto-cols-[220px] sm:gap-x-5 sm:gap-y-20 md:auto-cols-[260px] lg:auto-cols-[288px] lg:gap-x-6';
 
   return (
     <section ref={sectionRef} id="katalog" className="bg-[#fafaf9] py-16 sm:py-24">
+      <style>{`
+        @keyframes katalogLightSweep {
+          0% {
+            transform: translate(-50%, -50%) rotate(45deg) translate3d(-320px, 0, 0);
+            opacity: 1;
+          }
+          47% {
+            transform: translate(-50%, -50%) rotate(45deg) translate3d(320px, 0, 0);
+            opacity: 1;
+          }
+          48%,
+          100% {
+            transform: translate(-50%, -50%) rotate(45deg) translate3d(320px, 0, 0);
+            opacity: 0;
+          }
+        }
+      `}</style>
+
       <BookingModal
         isOpen={isBookingModalOpen}
         onClose={handleCloseBookingModal}
@@ -300,7 +327,7 @@ export default function Katalog({ onRequireAuth }: KatalogProps) {
                   background:
                     'linear-gradient(to right, #fafaf9 0%, rgba(250,250,249,0.92) 28%, rgba(255,255,255,0.45) 64%, rgba(250,250,249,0) 100%)',
                 }}
-                className="pointer-events-none absolute inset-y-0 left-0 z-20 w-8 sm:w-14"
+                className="pointer-events-none absolute inset-y-0 left-0 z-30 w-8 sm:w-14"
               />
 
               {/* Feather Gradient Halus di Tepi Kanan (0% beban blur GPU) */}
@@ -310,16 +337,28 @@ export default function Katalog({ onRequireAuth }: KatalogProps) {
                   background:
                     'linear-gradient(to left, #fafaf9 0%, rgba(250,250,249,0.92) 28%, rgba(255,255,255,0.45) 64%, rgba(250,250,249,0) 100%)',
                 }}
-                className="pointer-events-none absolute inset-y-0 right-0 z-20 w-8 sm:w-14"
+                className="pointer-events-none absolute inset-y-0 right-0 z-30 w-8 sm:w-14"
               />
 
               <div
                 ref={trackRef}
                 {...handlers}
                 style={{ willChange: 'transform' }}
-                className="grid w-max cursor-grab grid-flow-col grid-rows-2 auto-cols-[164px] gap-x-3.5 gap-y-14 px-4 pt-13 pb-4 select-none active:cursor-grabbing sm:auto-cols-[220px] sm:gap-x-5 sm:gap-y-20 sm:px-8 sm:pt-18 md:auto-cols-[260px] lg:auto-cols-[288px] lg:gap-x-6"
+                className="flex w-max cursor-grab gap-x-3.5 px-4 pt-13 pb-4 select-none active:cursor-grabbing sm:gap-x-5 sm:px-8 sm:pt-18 lg:gap-x-6"
               >
-                {marqueeItems.map(({ item, keyId }) => renderCameraCard(item, keyId))}
+                {/* Set Asli */}
+                <div ref={primarySetRef} className={marqueeGridClasses}>
+                  {filteredCameras.map((item) =>
+                    renderCameraCard(item, `setA-${item.id}`)
+                  )}
+                </div>
+
+                {/* Set Kloningan untuk Loop Seamless */}
+                <div ref={cloneSetRef} aria-hidden="true" className={marqueeGridClasses}>
+                  {filteredCameras.map((item) =>
+                    renderCameraCard(item, `setB-${item.id}`)
+                  )}
+                </div>
               </div>
             </div>
 
