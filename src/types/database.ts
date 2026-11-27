@@ -47,6 +47,8 @@ export interface Database {
           kode_inventaris: string
           kondisi: string | null
           status: 'Tersedia' | 'Dipinjam' | 'Maintenance'
+          stok: number
+          isi_paket: string[] | null
           image_url: string | null
           image_public_id: string | null
           created_at: string
@@ -58,6 +60,8 @@ export interface Database {
           kode_inventaris: string
           kondisi?: string | null
           status?: 'Tersedia' | 'Dipinjam' | 'Maintenance'
+          stok?: number
+          isi_paket?: string[] | null
           image_url?: string | null
           image_public_id?: string | null
           created_at?: string
@@ -69,6 +73,8 @@ export interface Database {
           kode_inventaris?: string
           kondisi?: string | null
           status?: 'Tersedia' | 'Dipinjam' | 'Maintenance'
+          stok?: number
+          isi_paket?: string[] | null
           image_url?: string | null
           image_public_id?: string | null
           created_at?: string
